@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matte Battle — Matematik 2b</title>
+  <style>
+    :root {
+      --bg: #070710;
+      --card: #0f0f1c;
+      --card2: #16162a;
+      --border: #252540;
+      --primary: #7c3aed;
+      --glow: #a855f7;
+      --accent: #06b6d4;
+      --hot: #ef4444;
+      --win: #fbbf24;
+      --ok: #22c55e;
+      --text: #f1f5f9;
+      --muted: #64748b;
+      --gold: #fbbf24;
+      --silver: #94a3b8;
+      --bronze: #b87333;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* === LEVEL SELECT SCREEN === */
+    #level-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      background: radial-gradient(ellipse at 50% 30%, rgba(124,58,237,.18) 0%, transparent 65%);
+    }
+    .level-title {
+      font-size: 2.8rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--glow), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .level-subtitle { color: var(--muted); font-size: .95rem; margin-bottom: 32px; text-align: center; }
+    .level-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 520px;
+      width: 100%;
+    }
+    @media (max-width: 600px) { .level-grid { grid-template-columns: 1fr; max-width: 340px; } }
+    .level-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .level-card:hover { transform: translateY(-4px); }
+    .level-card .lc-badge {
+      display: inline-block;
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: .82rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .level-card .lc-time { color: var(--muted); font-size: .8rem; margin-bottom: 10px; }
+    .level-card .lc-desc { color: var(--muted); font-size: .78rem; line-height: 1.5; }
+    .level-card.lc-e { border-color: rgba(34,197,94,.3); }
+    .level-card.lc-e:hover { border-color: #22c55e; box-shadow: 0 0 30px rgba(34,197,94,.15); }
+    .level-card.lc-e .lc-badge { background: rgba(34,197,94,.18); color: #22c55e; }
+    .level-card.lc-c { border-color: rgba(251,191,36,.3); }
+    .level-card.lc-c:hover { border-color: #fbbf24; box-shadow: 0 0 30px rgba(251,191,36,.15); }
+    .level-card.lc-c .lc-badge { background: rgba(251,191,36,.18); color: #fbbf24; }
+    .level-online { color: var(--muted); font-size: .82rem; margin-top: 24px; }
+    .level-online .online-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--ok); margin-right:5px; animation: pulse 2s infinite; }
+
+    /* === JOIN SCREEN === */
+    #join-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      background: radial-gradient(ellipse at 50% 30%, rgba(124,58,237,.18) 0%, transparent 65%);
+    }
+    .join-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+    }
+    .title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--glow), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 2px;
+    }
+    .level-badge-selected {
+      display: inline-block;
+      border-radius: 20px;
+      padding: 3px 14px;
+      font-size: .78rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .subtitle { color: var(--muted); font-size: .92rem; margin-bottom: 24px; }
+    .input-wrap { position: relative; margin-bottom: 12px; }
+    .input-wrap input {
+      width: 100%;
+      background: var(--card2);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 1.1rem;
+      padding: 14px 16px;
+      outline: none;
+      text-align: center;
+      transition: border-color .2s;
+    }
+    .input-wrap input:focus { border-color: var(--glow); }
+    .picker-section { margin-bottom: 16px; }
+    .picker-label { color: var(--muted); font-size: .78rem; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .color-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .color-swatch {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid transparent; cursor: pointer;
+      transition: all .15s;
+    }
+    .color-swatch:hover { transform: scale(1.15); }
+    .color-swatch.sel { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,.3); }
+    .acc-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .acc-btn {
+      background: var(--card2);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 8px 14px;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .acc-btn:hover { border-color: var(--glow); }
+    .acc-btn.sel { border-color: var(--glow); background: rgba(124,58,237,.2); }
+    .char-preview { display: flex; justify-content: center; margin: 12px 0; }
+    .char-preview canvas { border-radius: 10px; }
+    .btn-join {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--primary), var(--glow));
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 4px;
+    }
+    .btn-join:hover { opacity: .88; transform: translateY(-2px); }
+    .btn-back {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      padding: 10px 20px;
+      font-size: .88rem;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: all .2s;
+    }
+    .btn-back:hover { border-color: var(--glow); color: var(--text); }
+    .online-count { color: var(--muted); font-size: .82rem; margin-top: 14px; }
+    .online-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--ok); margin-right:5px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .err { color: var(--hot); font-size: .88rem; margin-top: 8px; min-height: 20px; }
+    .mini-lb { margin-top: 16px; }
+    .mini-lb-title { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .mini-lb-row { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .82rem; margin-bottom: 3px; }
+    .mini-lb-name { font-weight: 600; }
+    .mini-lb-pts { color: var(--glow); font-weight: 700; }
+
+    /* === ARENA SCREEN === */
+    #arena-screen { display: none; min-height: 100vh; padding: 12px; }
+    .arena-header {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1100px; margin: 0 auto 8px; padding: 0 4px; flex-wrap: wrap; gap: 6px;
+    }
+    .arena-logo { font-size: .9rem; font-weight: 700; color: var(--glow); letter-spacing: .5px; }
+    .header-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .my-score-badge {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 5px 14px; font-size: .88rem; font-weight: 700;
+    }
+    .my-score-num { color: var(--glow); margin-left: 4px; }
+    .streak-badge {
+      background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.3); border-radius: 20px;
+      padding: 5px 12px; font-size: .82rem; font-weight: 700; color: var(--win); display: none;
+    }
+    .streak-badge.active { display: inline-flex; align-items: center; gap: 4px; }
+    .online-pill {
+      background: var(--card2); border: 1px solid var(--border); border-radius: 20px;
+      padding: 4px 10px; font-size: .75rem; color: var(--muted); display: flex; align-items: center; gap: 5px;
+    }
+    .btn-icon {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); cursor: pointer; font-size: .88rem; padding: 5px 8px; transition: all .2s;
+    }
+    .btn-icon:hover { border-color: var(--glow); color: var(--glow); }
+    .btn-icon.muted { color: var(--hot); border-color: var(--hot); }
+    .btn-leave {
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); cursor: pointer; font-size: .78rem; padding: 5px 10px; transition: border-color .2s;
+    }
+    .btn-leave:hover { border-color: var(--hot); color: var(--hot); }
+    #stage-wrap {
+      max-width: 1100px; margin: 0 auto 10px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 14px; overflow: hidden; position: relative;
+    }
+    #stage { width: 100%; height: 160px; display: block; }
+    .arena-grid {
+      display: flex; flex-direction: column; max-width: 1100px; margin: 0 auto; gap: 12px;
+    }
+    @media (min-width: 820px) {
+      .arena-grid { display: grid; grid-template-columns: 210px 1fr 210px; align-items: start; }
+    }
+    .panel {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+    }
+    .panel-title {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--muted); margin-bottom: 12px;
+    }
+    .lb-item {
+      display: flex; align-items: center; padding: 7px 8px; border-radius: 8px; margin-bottom: 5px; transition: background .2s;
+    }
+    .lb-item.me { background: rgba(124,58,237,.18); }
+    .lb-rank { width: 22px; font-size: .82rem; font-weight: 800; text-align: center; }
+    .lb-name { flex: 1; font-size: .85rem; font-weight: 600; padding: 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-pts  { font-size: .85rem; font-weight: 700; color: var(--glow); }
+    .lb-streak { font-size: .7rem; margin-left: 4px; color: var(--win); }
+    .lb-item.streak-fire { border: 1px solid rgba(251,191,36,.3); animation: firePulse .8s infinite alternate; }
+    @keyframes firePulse { from{border-color:rgba(251,191,36,.2)} to{border-color:rgba(239,68,68,.4)} }
+    .arena-center { display: flex; flex-direction: column; gap: 12px; }
+    .q-meta { display: flex; justify-content: space-between; align-items: center; }
+    .q-badge {
+      background: rgba(124,58,237,.22); color: var(--glow); border-radius: 20px;
+      padding: 4px 12px; font-size: .75rem; font-weight: 700;
+    }
+    .round-num { color: var(--muted); font-size: .8rem; }
+    .timer-wrap { position: relative; }
+    .timer-track { height: 6px; background: var(--card2); border-radius: 3px; overflow: hidden; }
+    .timer-bar { height: 100%; border-radius: 3px; transition: width .4s linear, background .5s; background: var(--ok); }
+    .timer-secs { position: absolute; right: 0; top: 8px; font-size: .75rem; color: var(--muted); }
+    .q-text-wrap {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px 24px; text-align: center;
+    }
+    .q-text { font-size: clamp(1.15rem, 3vw, 1.6rem); font-weight: 700; line-height: 1.5; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt {
+      background: var(--card2); border: 2px solid var(--border); border-radius: 12px;
+      color: var(--text); cursor: pointer; font-size: 1rem; font-weight: 600;
+      padding: 18px 14px; text-align: center; transition: all .12s; line-height: 1.4;
+      position: relative; overflow: hidden;
+    }
+    .opt::before {
+      content: ''; position: absolute; inset: 0; background: rgba(255,255,255,.05);
+      opacity: 0; transition: opacity .1s;
+    }
+    .opt:hover:not(:disabled)::before { opacity: 1; }
+    .opt:hover:not(:disabled) { border-color: var(--glow); transform: translateY(-2px); }
+    .opt:active:not(:disabled) { transform: scale(.97); }
+    .opt.correct  { border-color: var(--ok);  background: rgba(34,197,94,.14); color: var(--ok); }
+    .opt.wrong    { border-color: var(--hot); background: rgba(239,68,68,.1);  color: var(--hot); animation: shake .35s; }
+    .opt:disabled { cursor: not-allowed; }
+    .opt-letter {
+      display: inline-block; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--card); font-size: .72rem; font-weight: 800;
+      line-height: 24px; text-align: center; margin-bottom: 6px;
+    }
+    .status-bar {
+      text-align: center; height: 28px; display: flex; align-items: center;
+      justify-content: center; font-size: .88rem; color: var(--muted); font-weight: 600; gap: 8px;
+    }
+    .status-bar.winner { color: var(--win); font-size: 1rem; }
+    .status-bar.me-won { color: var(--ok);  font-size: 1rem; }
+    .feed-item {
+      padding: 7px 8px; border-radius: 8px; margin-bottom: 5px;
+      background: var(--card2); font-size: .78rem; line-height: 1.4;
+    }
+    .feed-item .feed-name { font-weight: 700; }
+    .feed-item.feed-win .feed-name  { color: var(--win); }
+    .feed-item.feed-time .feed-name { color: var(--muted); }
+    .feed-item.feed-streak .feed-name { color: #f97316; }
+    .feed-item.feed-knockout .feed-name { color: var(--hot); }
+
+    /* overlays */
+    #win-overlay {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,.6); align-items: center; justify-content: center; pointer-events: none;
+    }
+    #win-overlay.show { display: flex; animation: fadeIn .2s; }
+    .win-card {
+      background: var(--card); border: 2px solid var(--win); border-radius: 20px;
+      padding: 32px 44px; text-align: center; animation: popIn .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 60px rgba(251,191,36,.25); max-width: 360px;
+    }
+    .win-canvas-wrap { display: flex; justify-content: center; margin-bottom: 8px; }
+    .win-name  { font-size: 1.8rem; font-weight: 900; color: var(--win); }
+    .win-sub   { color: var(--muted); margin-top: 4px; font-size: .88rem; }
+    .win-pts   { font-size: 1.05rem; color: var(--ok); font-weight: 700; margin-top: 6px; }
+    .win-streak { font-size: .85rem; color: #f97316; margin-top: 2px; }
+    .next-bar  { height: 3px; background: var(--border); border-radius: 2px; margin-top: 14px; overflow: hidden; }
+    .next-fill { height: 100%; background: var(--win); border-radius: 2px; width: 100%; transition: width 2.5s linear; }
+
+    #lb-modal {
+      display: none; position: fixed; inset: 0; z-index: 90;
+      background: rgba(0,0,0,.65); align-items: center; justify-content: center; padding: 20px;
+    }
+    #lb-modal.show { display: flex; }
+    .lb-modal-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 32px; width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto;
+    }
+    .lb-modal-title { font-size: 1.3rem; font-weight: 900; color: var(--win); text-align: center; margin-bottom: 16px; }
+    .lb-modal-close {
+      display: block; margin: 16px auto 0; background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); padding: 10px 24px; font-size: .9rem; cursor: pointer;
+    }
+    .lb-modal-close:hover { border-color: var(--glow); }
+
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes popIn  { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)} 15%{transform:translateX(-5px) translateY(2px)}
+      35%{transform:translateX(5px) translateY(-2px)} 55%{transform:translateX(-3px)}
+      75%{transform:translateX(3px)} 90%{transform:translateX(-1px)}
+    }
+    @keyframes screenShake {
+      0%,100%{transform:translate(0)} 10%{transform:translate(-4px,2px)}
+      30%{transform:translate(4px,-2px)} 50%{transform:translate(-3px,1px)}
+      70%{transform:translate(3px,-1px)} 90%{transform:translate(-2px,0)}
+    }
+    .screen-shake { animation: screenShake .4s ease-out; }
+
+    /* screen flash + combo popup */
+    .screen-flash {
+      position:fixed;inset:0;z-index:200;pointer-events:none;
+      animation:flashAnim .3s ease-out forwards;
+    }
+    .screen-flash.green{background:rgba(34,197,94,.3)}
+    .screen-flash.red{background:rgba(239,68,68,.35)}
+    .screen-flash.gold{background:rgba(251,191,36,.25)}
+    @keyframes flashAnim{from{opacity:1}to{opacity:0}}
+    .combo-popup {
+      position:fixed;top:28%;left:50%;transform:translate(-50%,-50%);
+      z-index:201;pointer-events:none;
+      font-size:clamp(2rem,6vw,3.2rem);font-weight:900;
+      text-shadow:0 0 20px currentColor,0 0 50px currentColor;
+      animation:comboPop .9s ease-out forwards;
+    }
+    @keyframes comboPop {
+      0%{transform:translate(-50%,-50%) scale(.4);opacity:0}
+      15%{transform:translate(-50%,-50%) scale(1.4);opacity:1}
+      100%{transform:translate(-50%,-50%) scale(1) translateY(-40px);opacity:0}
+    }
+
+    @media (max-width: 500px) {
+      .options-grid { grid-template-columns: 1fr; }
+      .join-card { padding: 24px 18px; }
+      .level-title { font-size: 2rem; }
+      #stage { height: 130px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LEVEL SELECT SCREEN ===== -->
+<div id="level-screen">
+  <div class="level-title">MATTE BATTLE</div>
+  <div class="level-subtitle">V&auml;lj bana &mdash; Matematik 2b</div>
+  <div class="level-grid">
+    <div class="level-card lc-e" onclick="selectLevel('E')">
+      <div class="lc-badge">BRAWL</div>
+      <div class="lc-time">15 sek &bull; E-niv&aring;</div>
+      <div class="lc-desc">Snabba rundor! Symmetrilinjer, nollprodukt&shy;metoden, ekvations&shy;system, grafavl&auml;sning, statistik</div>
+    </div>
+    <div class="level-card lc-c" onclick="selectLevel('C')">
+      <div class="lc-badge">BLOODMATCH</div>
+      <div class="lc-time">20 sek &bull; C-niv&aring;</div>
+      <div class="lc-desc">H&aring;rdare fr&aring;gor! Kvadrat&shy;komplettering, pq-formeln, exponential&shy;ekvationer, regression, normalf&ouml;rdelning</div>
+    </div>
+  </div>
+  <div class="level-online"><span class="online-dot"></span><span id="total-online">Laddar&hellip;</span></div>
+</div>
+
+<!-- ===== JOIN SCREEN ===== -->
+<div id="join-screen">
+  <div class="join-card">
+    <div class="title">MATTE BATTLE</div>
+    <div class="level-badge-selected" id="join-level-badge"></div>
+    <div class="subtitle">Svara snabbast &mdash; vinn rundan &mdash; bli m&auml;stare</div>
+    <div class="input-wrap">
+      <input type="text" id="name-input" placeholder="Ditt namn" maxlength="18" autocomplete="off"
+             onkeydown="if(event.key==='Enter') joinArena()">
+    </div>
+    <div class="picker-section">
+      <div class="picker-label">V&auml;lj f&auml;rg</div>
+      <div class="color-row" id="color-row"></div>
+    </div>
+    <div class="picker-section">
+      <div class="picker-label">Accessoar</div>
+      <div class="acc-row" id="acc-row"></div>
+    </div>
+    <div class="char-preview"><canvas id="preview-canvas" width="80" height="100"></canvas></div>
+    <button class="btn-join" onclick="joinArena()">G&aring; till Battle!</button>
+    <div class="err" id="join-err"></div>
+    <div class="online-count">
+      <span class="online-dot"></span>
+      <span id="online-txt">Laddar&hellip;</span>
+    </div>
+    <button class="btn-back" onclick="goBackToLevels()">&larr; Byt niv&aring;</button>
+    <div class="mini-lb" id="mini-lb"></div>
+  </div>
+</div>
+
+<!-- ===== ARENA SCREEN ===== -->
+<div id="arena-screen">
+  <div class="arena-header">
+    <div class="arena-logo" id="arena-logo">MATTE BATTLE</div>
+    <div class="header-right">
+      <div class="online-pill"><span class="online-dot"></span><span id="arena-online">0</span></div>
+      <div class="streak-badge" id="streak-badge">x<span id="streak-num">0</span></div>
+      <div class="my-score-badge">Du: <span class="my-score-num" id="my-pts">0</span> p</div>
+      <button class="btn-icon" id="mute-btn" onclick="toggleMute()" title="Ljud p&aring;/av">&#x1f50a;</button>
+      <button class="btn-icon" onclick="showLeaderboardModal()" title="Topplista">&#x1f3c6;</button>
+      <button class="btn-leave" onclick="leaveArena()">L&auml;mna</button>
+    </div>
+  </div>
+  <div id="stage-wrap"><canvas id="stage"></canvas></div>
+  <div class="arena-grid">
+    <div class="panel" id="lb-panel">
+      <div class="panel-title">Topplista</div>
+      <div id="lb-list"></div>
+    </div>
+    <div class="arena-center">
+      <div class="q-meta">
+        <span class="q-badge" id="q-cat">Laddar...</span>
+        <span class="round-num" id="round-num">Runda 1</span>
+      </div>
+      <div class="timer-wrap">
+        <div class="timer-track"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+        <div class="timer-secs" id="timer-secs">15s</div>
+      </div>
+      <div class="q-text-wrap"><div class="q-text" id="q-text">V&auml;ntar p&aring; spelare&hellip;</div></div>
+      <div class="options-grid" id="opts-grid"></div>
+      <div class="status-bar" id="status-bar">Svara snabbast!</div>
+    </div>
+    <div class="panel" id="feed-panel">
+      <div class="panel-title">Aktivitet</div>
+      <div id="feed-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- overlays -->
+<div id="win-overlay">
+  <div class="win-card">
+    <div class="win-canvas-wrap"><canvas id="win-char" width="80" height="100"></canvas></div>
+    <div class="win-name" id="win-name"></div>
+    <div class="win-sub" id="win-sub"></div>
+    <div class="win-pts" id="win-pts"></div>
+    <div class="win-streak" id="win-streak"></div>
+    <div class="next-bar"><div class="next-fill" id="next-fill"></div></div>
+  </div>
+</div>
+<div id="lb-modal" onclick="if(event.target===this)closeLbModal()">
+  <div class="lb-modal-card">
+    <div class="lb-modal-title">All-time Topplista</div>
+    <div id="lb-modal-list"></div>
+    <button class="lb-modal-close" onclick="closeLbModal()">St&auml;ng</button>
+  </div>
+</div>
+
+<script>
+// ===================================================================
+//  CONFIG
+// ===================================================================
+const firebaseConfig = {
+  apiKey:            "AIzaSyBuyypjzvmUFpMSWgbl3-OHx97Tvp79JkA",
+  authDomain:        "smatte-battle.firebaseapp.com",
+  databaseURL:       "https://smatte-battle-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "smatte-battle",
+  storageBucket:     "smatte-battle.firebasestorage.app",
+  messagingSenderId: "718494408796",
+  appId:             "1:718494408796:web:8acd0956966770651e4699"
+};
+
+const LEVELS = {
+  E: { path:'battleE', time:15, name:'Brawl', color:'#22c55e', bg:'rgba(34,197,94,.18)' },
+  C: { path:'battleC', time:20, name:'Bloodmatch', color:'#fbbf24', bg:'rgba(251,191,36,.18)' },
+};
+
+let currentLevel = null;
+let ROUND_TIME = 15;
+let db, ARENA;
+
+function _loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve;
+    s.onerror = () => reject(new Error('Could not load: ' + src));
+    document.head.appendChild(s);
+  });
+}
+async function _initFirebase() {
+  try {
+    await _loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js');
+    await _loadScript('https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js');
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    _onFirebaseReady();
+  } catch(e) {
+    document.body.innerHTML = '<div style="color:#ef4444;padding:40px;font-family:sans-serif;text-align:center">'
+      + '<h2>Kunde inte ladda Firebase</h2><pre style="color:#f59e0b;margin-top:16px;font-size:.8rem">'+e.message+'</pre></div>';
+  }
+}
+document.addEventListener('DOMContentLoaded', () => { initCharacterPicker(); _initFirebase(); });
+
+// ===================================================================
+//  CHARACTER SYSTEM
+// ===================================================================
+const COLORS = ['#7c3aed','#06b6d4','#ef4444','#22c55e','#f59e0b','#ec4899','#3b82f6','#f97316'];
+const ACC_NAMES = ['Ingen','Pannband','Hatt','Cape'];
+let myColor = COLORS[0], myAcc = 0;
+
+function initCharacterPicker() {
+  const cr = $('color-row');
+  COLORS.forEach((c,i) => { const d=document.createElement('div'); d.className='color-swatch'+(i===0?' sel':''); d.style.background=c; d.onclick=()=>pickColor(i); cr.appendChild(d); });
+  const ar = $('acc-row');
+  ACC_NAMES.forEach((n,i) => { const b=document.createElement('button'); b.className='acc-btn'+(i===0?' sel':''); b.textContent=n; b.onclick=()=>pickAcc(i); ar.appendChild(b); });
+  drawPreview();
+}
+function pickColor(i) { myColor=COLORS[i]; document.querySelectorAll('.color-swatch').forEach((s,j)=>s.classList.toggle('sel',j===i)); drawPreview(); }
+function pickAcc(i) { myAcc=i; document.querySelectorAll('.acc-btn').forEach((b,j)=>b.classList.toggle('sel',j===i)); drawPreview(); }
+function drawPreview() { const c=$('preview-canvas'),ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); drawStickFigure(ctx,40,18,myColor,myAcc,0,'idle'); }
+
+function drawStickFigure(ctx,x,y,color,acc,frame,state) {
+  ctx.save(); ctx.lineCap='round'; ctx.lineJoin='round';
+  let bounce=0,lean=0;
+  if(state==='idle') bounce=Math.sin(frame*0.06)*3;
+  else if(state==='celebrate'){bounce=-8+Math.sin(frame*0.15)*4;}
+  else if(state==='hit'){lean=6;bounce=2;}
+  else if(state==='fighting'){bounce=Math.sin(frame*0.12)*4;lean=Math.sin(frame*0.07)*3;}
+  else if(state==='dead'){ctx.globalAlpha=0.35;lean=22;bounce=18;}
+  const hx=x+lean,hy=y+14+bounce;
+  // Head
+  ctx.beginPath();ctx.arc(hx,hy,12,0,Math.PI*2);ctx.fillStyle=state==='dead'?'#555':color;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+  // Eyes
+  if(state==='dead'){
+    ctx.strokeStyle='#ef4444';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(hx-6,hy-3);ctx.lineTo(hx-2,hy+1);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(hx-2,hy-3);ctx.lineTo(hx-6,hy+1);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(hx+2,hy-3);ctx.lineTo(hx+6,hy+1);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(hx+6,hy-3);ctx.lineTo(hx+2,hy+1);ctx.stroke();
+  } else {
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(hx-4,hy-1,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(hx+4,hy-1,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(hx-3.5,hy-1,1.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(hx+4.5,hy-1,1.2,0,Math.PI*2);ctx.fill();
+  }
+  // Body
+  const by=hy+12,by2=by+28;
+  ctx.strokeStyle=state==='dead'?'#555':color;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(hx,by);ctx.lineTo(hx,by2);ctx.stroke();
+  // Arms
+  ctx.lineWidth=2.5;const armY=by+6;
+  if(state==='celebrate'){ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(hx-16,armY-18+Math.sin(frame*0.2)*4);ctx.stroke();ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(hx+16,armY-18+Math.cos(frame*0.2)*4);ctx.stroke();}
+  else if(state==='fighting'){const p=Math.sin(frame*0.18);ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(p>0.3?hx-22:hx-12,p>0.3?armY-8+Math.sin(frame*0.25)*3:armY+4);ctx.stroke();ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(p<-0.3?hx+22:hx+12,p<-0.3?armY-8+Math.cos(frame*0.25)*3:armY+4);ctx.stroke();}
+  else if(state==='dead'){ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(hx-10,armY+20);ctx.stroke();ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(hx+10,armY+20);ctx.stroke();}
+  else{ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(hx-16,armY+10+Math.sin(frame*0.04)*3);ctx.stroke();ctx.beginPath();ctx.moveTo(hx,armY);ctx.lineTo(hx+16,armY+10+Math.cos(frame*0.04)*3);ctx.stroke();}
+  // Legs
+  ctx.lineWidth=2.5;const ls=state==='celebrate'?14:state==='fighting'?16:10;
+  ctx.beginPath();ctx.moveTo(hx,by2);ctx.lineTo(hx-ls,by2+18+Math.sin(frame*0.05)*2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(hx,by2);ctx.lineTo(hx+ls,by2+18+Math.cos(frame*0.05)*2);ctx.stroke();
+  // Accessories (skip if dead)
+  if(state!=='dead'){
+    if(acc===1){ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(hx,hy-2,13,-0.5,Math.PI+0.5);ctx.stroke();ctx.beginPath();ctx.moveTo(hx+12,hy-5);ctx.lineTo(hx+20,hy-10+Math.sin(frame*0.08)*3);ctx.stroke();}
+    else if(acc===2){ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(hx-14,hy-10);ctx.lineTo(hx,hy-26);ctx.lineTo(hx+14,hy-10);ctx.closePath();ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.arc(hx,hy-26,4,0,Math.PI*2);ctx.fill();}
+    else if(acc===3){ctx.fillStyle=color;ctx.globalAlpha=Math.min(ctx.globalAlpha,0.4);ctx.beginPath();ctx.moveTo(hx-6,by);ctx.lineTo(hx+6,by);ctx.lineTo(hx+10+Math.sin(frame*0.06)*4,by2+10);ctx.lineTo(hx-10+Math.sin(frame*0.07)*4,by2+10);ctx.closePath();ctx.fill();}
+  }
+  ctx.restore();
+}
+
+// ===================================================================
+//  SOUND SYSTEM (rich layered Web Audio)
+// ===================================================================
+let audioCtx=null,soundMuted=false;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function tone(ctx,freq,dur,type,delay,vol){const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;o.type=type||'sine';const t=ctx.currentTime+(delay||0);g.gain.setValueAtTime(vol||0.2,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.start(t);o.stop(t+dur);}
+function noiseBurst(ctx,dur,vol,delay){const n=Math.floor(ctx.sampleRate*dur),buf=ctx.createBuffer(1,n,ctx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);const src=ctx.createBufferSource(),g=ctx.createGain();src.buffer=buf;src.connect(g);g.connect(ctx.destination);const t=ctx.currentTime+(delay||0);g.gain.setValueAtTime(vol||0.15,t);src.start(t);}
+function sweep(ctx,f1,f2,dur,type,delay,vol){const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=type||'sine';const t=ctx.currentTime+(delay||0);o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(Math.max(f2,1),t+dur);g.gain.setValueAtTime(vol||0.2,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.start(t);o.stop(t+dur);}
+function chord(ctx,freqs,dur,type,delay,vol){freqs.forEach(f=>tone(ctx,f,dur,type,delay,(vol||0.2)/freqs.length));}
+function playSound(type){if(soundMuted)return;try{const ctx=ensureAudio();switch(type){
+  case'correct':{
+    // Satisfying ding — pitch rises with streak for dopamine escalation
+    const base=523+Math.min(ME.streak,5)*50;
+    tone(ctx,base,0.08,'sine',0,0.28);tone(ctx,base*1.26,0.12,'sine',0.06,0.22);tone(ctx,base*1.5,0.16,'sine',0.12,0.18);
+    noiseBurst(ctx,0.04,0.12,0);break;
+  }
+  case'death':{
+    // Heavy impact — noise punch + descending sweep + sub rumble
+    noiseBurst(ctx,0.18,0.4,0);sweep(ctx,500,40,0.5,'sawtooth',0,0.28);
+    tone(ctx,60,0.6,'triangle',0.08,0.18);tone(ctx,40,0.35,'square',0.04,0.1);break;
+  }
+  case'win':{
+    // Triumphant fanfare — ascending chords + shimmer
+    chord(ctx,[523,659,784],0.14,'sine',0,0.35);chord(ctx,[659,784,988],0.14,'sine',0.14,0.35);
+    chord(ctx,[784,988,1175],0.28,'sine',0.28,0.4);noiseBurst(ctx,0.08,0.12,0.28);
+    tone(ctx,1568,0.3,'sine',0.35,0.1);break;
+  }
+  case'kill':{
+    // Hitmarker — snappy click + bass thud
+    noiseBurst(ctx,0.03,0.35,0);tone(ctx,900,0.04,'square',0,0.22);
+    tone(ctx,180,0.1,'sine',0.02,0.18);break;
+  }
+  case'tick':tone(ctx,1000,0.03,'square',0,0.1);break;
+  case'streak':{
+    // Power-up — escalating notes, richer at higher streaks
+    const n=Math.min(ME.streak,7);
+    for(let i=0;i<n;i++)tone(ctx,400+i*90,0.07,'sine',i*0.04,0.22);
+    if(n>=3)noiseBurst(ctx,0.06,0.1,n*0.04);
+    if(n>=5)chord(ctx,[880,1100,1320],0.22,'sine',n*0.04,0.3);break;
+  }
+  case'knockout':{
+    // Bass drop explosion — THE big dopamine hit
+    sweep(ctx,300,25,0.7,'sawtooth',0,0.4);noiseBurst(ctx,0.35,0.4,0);
+    tone(ctx,35,0.9,'triangle',0.08,0.25);chord(ctx,[80,120],0.5,'square',0.04,0.2);
+    sweep(ctx,2000,200,0.3,'sine',0,0.1);break;
+  }
+  case'whoosh':{
+    // Round start — dramatic rising sweep
+    sweep(ctx,80,1800,0.18,'sawtooth',0,0.18);noiseBurst(ctx,0.14,0.22,0);
+    tone(ctx,1200,0.06,'sine',0.15,0.12);break;
+  }
+  case'countdown':{
+    // Heartbeat — double thump, increasingly tense
+    tone(ctx,55,0.12,'sine',0,0.35);tone(ctx,45,0.16,'sine',0.13,0.25);break;
+  }
+  case'go':{
+    chord(ctx,[880,1100,1320],0.18,'sine',0,0.3);noiseBurst(ctx,0.05,0.18,0);break;
+  }
+}}catch(e){}}
+function toggleMute(){soundMuted=!soundMuted;$('mute-btn').textContent=soundMuted?'\u{1f507}':'\u{1f50a}';$('mute-btn').classList.toggle('muted',soundMuted);}
+
+// ===================================================================
+//  VISUAL JUICE (screen flash + combo popup)
+// ===================================================================
+function screenFlash(color){const el=document.createElement('div');el.className='screen-flash '+color;document.body.appendChild(el);setTimeout(()=>el.remove(),400);}
+function comboPopup(text,color){const el=document.createElement('div');el.className='combo-popup';el.style.color=color||'#fbbf24';el.textContent=text;document.body.appendChild(el);setTimeout(()=>el.remove(),1000);}
+
+// ===================================================================
+//  PARTICLE SYSTEM
+// ===================================================================
+const particles=[];
+function spawnParticles(x,y,color,count){for(let i=0;i<count;i++)particles.push({x,y,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10-4,life:1,decay:0.015+Math.random()*0.02,color:color||'#fbbf24',size:2+Math.random()*5});}
+function updateParticles(ctx){for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life-=p.decay;if(p.life<=0){particles.splice(i,1);continue;}ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);}ctx.globalAlpha=1;}
+
+// ===================================================================
+//  QUESTION BANKS — ALL LEVELS
+// ===================================================================
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+// --- E-LEVEL generators ---
+function genSymmetrilinje(){const a=[1,-1,2,-2][Math.floor(Math.random()*4)];const bp=Math.floor(Math.random()*9)-4;const b=-2*a*bp;const c=Math.floor(Math.random()*7)-3;const bStr=b===0?'':(b>0?' + '+b+'x':' - '+Math.abs(b)+'x');const aStr=a===1?'x\u00b2':a===-1?'-x\u00b2':a+'x\u00b2';const cStr=c===0?'':(c>0?' + '+c:' - '+Math.abs(c));const q='Vad \u00e4r symmetrilinjen f\u00f6r y = '+aStr+bStr+cStr+'?';const correct='x = '+bp;const wrongs=new Set();while(wrongs.size<3){const w=bp+(Math.floor(Math.random()*7)-3);if(w!==bp)wrongs.add('x = '+w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Symmetrilinje',q,o:opts,a:opts.indexOf(correct)};}
+function genNollprodukt(){let p=Math.floor(Math.random()*9)-4;let q2=Math.floor(Math.random()*9)-4;if(p===q2)q2=p+1+Math.floor(Math.random()*3);const b=-(p+q2),cc=p*q2;const bStr=b===0?'':(b>0?' + '+b+'x':' - '+Math.abs(b)+'x');const cStr=cc===0?'':(cc>0?' + '+cc:' - '+Math.abs(cc));const question='L\u00f6s med nollproduktmetoden: x\u00b2'+bStr+cStr+' = 0';const[lo,hi]=[Math.min(p,q2),Math.max(p,q2)];const correct='x = '+lo+' och x = '+hi;const wrongs=new Set();while(wrongs.size<3){const a1=lo+Math.floor(Math.random()*5)-2;const a2=hi+Math.floor(Math.random()*5)-2;const[wl,wh]=[Math.min(a1,a2),Math.max(a1,a2)];const w='x = '+wl+' och x = '+wh;if(w!==correct)wrongs.add(w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Nollproduktmetoden',q:question,o:opts,a:opts.indexOf(correct)};}
+function genEkvationssystemE(){const x=Math.floor(Math.random()*9)-4;const y=Math.floor(Math.random()*9)-4;const a2=[1,2,1][Math.floor(Math.random()*3)];const b2=[-1,1,-2][Math.floor(Math.random()*3)];const c1=x+y;const c2=a2*x+b2*y;const eq1='x'+(1===1?' + y':'')+' = '+c1;const eq2=(a2===1?'x':a2+'x')+(b2===1?' + y':b2===-1?' - y':(b2>0?' + '+b2+'y':' - '+Math.abs(b2)+'y'))+' = '+c2;const question='L\u00f6s: '+eq1+', '+eq2;const correct='x = '+x+', y = '+y;const wrongs=new Set();while(wrongs.size<3){const wx=x+Math.floor(Math.random()*5)-2;const wy=y+Math.floor(Math.random()*5)-2;const w='x = '+wx+', y = '+wy;if(w!==correct)wrongs.add(w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Ekvationssystem',q:question,o:opts,a:opts.indexOf(correct)};}
+function genStatistikE(){const n=5;const data=Array.from({length:n},()=>Math.floor(Math.random()*20)+1);const sorted=[...data].sort((a,b)=>a-b);const mean=data.reduce((s,v)=>s+v,0)/n;const median=sorted[Math.floor(n/2)];const askMean=Math.random()>0.5;const question=(askMean?'Ber\u00e4kna medelv\u00e4rdet':'Ber\u00e4kna medianen')+' av: '+data.join(', ');const correctVal=askMean?mean:median;const correctStr=Number.isInteger(correctVal)?''+correctVal:correctVal.toFixed(1);const wrongs=new Set();while(wrongs.size<3){let w=correctVal+(Math.floor(Math.random()*7)-3);if(w<=0)w=correctVal+Math.floor(Math.random()*4)+1;const ws=Number.isInteger(w)?''+w:w.toFixed(1);if(ws!==correctStr)wrongs.add(ws);}const opts=[correctStr,...wrongs].sort(()=>Math.random()-.5);return{c:'Statistik',q:question,o:opts,a:opts.indexOf(correctStr)};}
+
+// --- E-LEVEL additional generators ---
+function genLinjar(){const k=[-3,-2,-1,1,2,3,4][Math.floor(Math.random()*7)];const m=Math.floor(Math.random()*11)-5;const kStr=k===1?'':k===-1?'-':''+k;const mStr=m===0?'':(m>0?' + '+m:' - '+Math.abs(m));if(Math.random()<0.5){const q='Vad \u00e4r lutningen f\u00f6r y = '+kStr+'x'+mStr+'?';const correct='k = '+k;const wrongs=new Set();while(wrongs.size<3){const w=k+[-3,-2,-1,1,2,3][Math.floor(Math.random()*6)];if(w!==k)wrongs.add('k = '+w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Linj\u00e4ra funktioner',q,o:opts,a:opts.indexOf(correct)};}else{const q='Var sk\u00e4r y = '+kStr+'x'+mStr+' y-axeln?';const correct='(0, '+m+')';const wrongs=new Set();while(wrongs.size<3){const w=m+[-4,-2,-1,1,2,4][Math.floor(Math.random()*6)];if(w!==m)wrongs.add('(0, '+w+')');}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Linj\u00e4ra funktioner',q,o:opts,a:opts.indexOf(correct)};}}
+function genForandringsfaktor(){const pct=[5,10,15,20,25,30,40,50][Math.floor(Math.random()*8)];const oka=Math.random()>0.5;const f=oka?1+pct/100:1-pct/100;const q='Vilken f\u00f6r\u00e4ndringsfaktor motsvarar en '+(oka?'\u00f6kning':'minskning')+' med '+pct+'%?';const correct=''+f;const w1=''+(pct/100);const w2=''+(oka?f+0.1:Math.max(0.05,f-0.1));const w3=''+(2-f);const wrongs=[...new Set([w1,w2,w3].filter(w=>w!==correct))].slice(0,3);while(wrongs.length<3){const w=''+(Math.round((Math.random()*1.5+0.2)*100)/100);if(w!==correct&&!wrongs.includes(w))wrongs.push(w);}const opts=[correct,...wrongs.slice(0,3)].sort(()=>Math.random()-.5);return{c:'F\u00f6r\u00e4ndringsfaktor',q,o:opts,a:opts.indexOf(correct)};}
+function genAndragradVertex(){const a=[1,-1,2,-2][Math.floor(Math.random()*4)];const xv=Math.floor(Math.random()*7)-3;const yv=Math.floor(Math.random()*11)-5;const b=-2*a*xv;const cc=a*xv*xv+yv;const aStr=a===1?'x\u00b2':a===-1?'-x\u00b2':a+'x\u00b2';const bStr=b===0?'':(b>0?' + '+b+'x':' - '+Math.abs(b)+'x');const cStr=cc===0?'':(cc>0?' + '+cc:' - '+Math.abs(cc));const minMax=a>0?'minsta':'st\u00f6rsta';const q='Vad \u00e4r '+minMax+' v\u00e4rdet f\u00f6r y = '+aStr+bStr+cStr+'?';const correct=''+yv;const wrongs=new Set();while(wrongs.size<3){const w=yv+Math.floor(Math.random()*9)-4;if(w!==yv)wrongs.add(''+w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Andragradsfunktion',q,o:opts,a:opts.indexOf(correct)};}
+
+// --- C-LEVEL generators ---
+function genKvadratkomplettering(){const p=Math.floor(Math.random()*7)-3;const q=Math.floor(Math.random()*11)-5;const b=2*p,c=p*p+q;const bStr=b===0?'':(b>0?' + '+b+'x':' - '+Math.abs(b)+'x');const cStr=c===0?'':(c>0?' + '+c:' - '+Math.abs(c));const question='Kvadratkomplettera: x\u00b2'+bStr+cStr;const pStr=p===0?'x':(p>0?'(x + '+p+')':'(x - '+Math.abs(p)+')');const correct=pStr+'\u00b2'+(q===0?'':(q>0?' + '+q:' - '+Math.abs(q)));const wrongs=new Set();while(wrongs.size<3){const wp=p+Math.floor(Math.random()*5)-2;const wq=q+Math.floor(Math.random()*7)-3;const wpStr=wp===0?'x':(wp>0?'(x + '+wp+')':'(x - '+Math.abs(wp)+')');const w=wpStr+'\u00b2'+(wq===0?'':(wq>0?' + '+wq:' - '+Math.abs(wq)));if(w!==correct)wrongs.add(w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Kvadratkomplettering',q:question,o:opts,a:opts.indexOf(correct)};}
+function genAndragrad(){const r1=Math.floor(Math.random()*9)-4;const r2=Math.floor(Math.random()*9)-4;const b=-(r1+r2),c=r1*r2;const bStr=b===0?'':(b>0?' + '+b+'x':' - '+Math.abs(b)+'x');const cStr=c===0?'':(c>0?' + '+c:' - '+Math.abs(c));const question='L\u00f6s med pq-formeln: x\u00b2'+bStr+cStr+' = 0';const[lo,hi]=[Math.min(r1,r2),Math.max(r1,r2)];const correct=r1===r2?'x = '+r1+' (dubbelrot)':'x = '+lo+' och x = '+hi;const wrongs=new Set();while(wrongs.size<3){const w1=lo+Math.floor(Math.random()*5)-2;const w2=hi+Math.floor(Math.random()*5)-2;const[wl,wh]=[Math.min(w1,w2),Math.max(w1,w2)];const w=w1===w2?'x = '+w1+' (dubbelrot)':'x = '+wl+' och x = '+wh;if(w!==correct)wrongs.add(w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Andragradsekvation',q:question,o:opts,a:opts.indexOf(correct)};}
+function genExponential(){const bases=[2,3,5,10];const base=bases[Math.floor(Math.random()*bases.length)];const exp=Math.floor(Math.random()*5)+1;const result=Math.pow(base,exp);const question='L\u00f6s: '+base+'\u02e3 = '+result;const correct='x = '+exp;const wrongs=new Set();while(wrongs.size<3){const w=exp+Math.floor(Math.random()*5)-2;if(w!==exp&&w>0)wrongs.add('x = '+w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Exponentialekvation',q:question,o:opts,a:opts.indexOf(correct)};}
+function genFaktorisering(){let p=Math.floor(Math.random()*7)-3;let q2=Math.floor(Math.random()*7)-3;if(p===q2)q2=p+1+Math.floor(Math.random()*3);const b=-(p+q2),cc=p*q2;const bStr=b===0?'':(b>0?' + '+b+'x':' - '+Math.abs(b)+'x');const cStr=cc===0?'':(cc>0?' + '+cc:' - '+Math.abs(cc));const question='Faktorisera: x\u00b2'+bStr+cStr;const pStr=p>=0?'(x - '+p+')':'(x + '+Math.abs(p)+')';const qStr=q2>=0?'(x - '+q2+')':'(x + '+Math.abs(q2)+')';const correct=pStr+qStr;const wrongs=new Set();while(wrongs.size<3){const wp=p+Math.floor(Math.random()*5)-2;const wq=q2+Math.floor(Math.random()*5)-2;const wpS=wp>=0?'(x - '+wp+')':'(x + '+Math.abs(wp)+')';const wqS=wq>=0?'(x - '+wq+')':'(x + '+Math.abs(wq)+')';const w=wpS+wqS;if(w!==correct)wrongs.add(w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Faktorisering',q:question,o:opts,a:opts.indexOf(correct)};}
+function genLogaritmEnkel(){const bases=[2,3,5,10];const base=bases[Math.floor(Math.random()*bases.length)];const exp=Math.floor(Math.random()*4)+1;const val=Math.pow(base,exp);const sub={2:'\u2082',3:'\u2083',5:'\u2085',10:'\u2081\u2080'};const q=base===10?'Ber\u00e4kna lg('+val+')':'Ber\u00e4kna log'+sub[base]+'('+val+')';const correct=''+exp;const wrongs=new Set();while(wrongs.size<3){const w=exp+[-3,-2,-1,1,2,3][Math.floor(Math.random()*6)];if(w!==exp&&w>0)wrongs.add(''+w);}const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Logaritmer',q,o:opts,a:opts.indexOf(correct)};}
+function genPotensregler(){const sup=n=>{const s=''+n;let r='';for(let i=0;i<s.length;i++){const d=s.charCodeAt(i)-48;r+=String.fromCharCode([0x2070,0xB9,0xB2,0xB3,0x2074,0x2075,0x2076,0x2077,0x2078,0x2079][d]);}return r;};const e1=Math.floor(Math.random()*5)+2;const e2=Math.floor(Math.random()*4)+2;const type=Math.floor(Math.random()*3);if(type===0){const q='F\u00f6renkla: x'+sup(e1)+' \u00b7 x'+sup(e2);const ans=e1+e2;const correct='x'+sup(ans);const wrongs=['x'+sup(e1*e2),'x'+sup(Math.abs(e1-e2)||1),'x'+sup(ans+1)];const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Potensregler',q,o:opts,a:opts.indexOf(correct)};}else if(type===1){const big=Math.max(e1,e2)+Math.floor(Math.random()*3)+1;const small=Math.min(e1,e2);const q='F\u00f6renkla: x'+sup(big)+' / x'+sup(small);const ans=big-small;const correct='x'+sup(ans);const wrongs=['x'+sup(big+small),'x'+sup(big*small),'x'+sup(ans+1)];const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Potensregler',q,o:opts,a:opts.indexOf(correct)};}else{const q='F\u00f6renkla: (x'+sup(e1)+')'+sup(e2);const ans=e1*e2;const correct='x'+sup(ans);const wrongs=['x'+sup(e1+e2),'x'+sup(ans+1),'x'+sup(Math.max(1,ans-2))];const opts=[correct,...wrongs].sort(()=>Math.random()-.5);return{c:'Potensregler',q,o:opts,a:opts.indexOf(correct)};}}
+function genDiskriminant(){const b=Math.floor(Math.random()*11)-5;const c=Math.floor(Math.random()*11)-5;const D=b*b-4*c;const nRoots=D>0?'Tv\u00e5 reella r\u00f6tter':D===0?'En dubbelrot':'Inga reella r\u00f6tter';const bStr=b===0?'':(b>0?' + '+b+'x':' - '+Math.abs(b)+'x');const cStr=c===0?'':(c>0?' + '+c:' - '+Math.abs(c));const question='Hur m\u00e5nga reella r\u00f6tter har x\u00b2'+bStr+cStr+' = 0?';const allOpts=['Tv\u00e5 reella r\u00f6tter','En dubbelrot','Inga reella r\u00f6tter','O\u00e4ndligt m\u00e5nga'];const opts=allOpts.sort(()=>Math.random()-.5);return{c:'Diskriminant',q:question,o:opts,a:opts.indexOf(nRoots)};}
+
+
+// --- Static question banks ---
+const STATIC = {
+E: [
+  {c:'Symmetrilinje',q:'Vad \u00e4r symmetrilinjen f\u00f6r y = x\u00b2 - 6x + 5?',o:['x = 3','x = -3','x = 6','x = 5'],a:0},
+  {c:'Symmetrilinje',q:'Vad \u00e4r symmetrilinjen f\u00f6r y = 2x\u00b2 + 8x + 1?',o:['x = -2','x = 2','x = -4','x = 4'],a:0},
+  {c:'Symmetrilinje',q:'Var har y = -x\u00b2 + 4x - 1 sin vertex?',o:['x = 2','x = -2','x = 4','x = 1'],a:0},
+  {c:'Nollproduktmetoden',q:'L\u00f6s: (x - 3)(x + 2) = 0',o:['x = 3 eller x = -2','x = -3 eller x = 2','x = 3 eller x = 2','x = -3 eller x = -2'],a:0},
+  {c:'Nollproduktmetoden',q:'L\u00f6s: x(x - 5) = 0',o:['x = 0 eller x = 5','x = 0 eller x = -5','x = 5','x = -5'],a:0},
+  {c:'Nollproduktmetoden',q:'L\u00f6s: (2x + 4)(x - 1) = 0',o:['x = -2 eller x = 1','x = 2 eller x = -1','x = 4 eller x = 1','x = -4 eller x = 1'],a:0},
+  {c:'Avl\u00e4sa grafer',q:'En parabel har vertex i (2, -1) och \u00f6ppnar upp\u00e5t. Vad st\u00e4mmer?',o:['Funktionens minsta v\u00e4rde \u00e4r -1','Funktionens st\u00f6rsta v\u00e4rde \u00e4r -1','Funktionen saknar nollst\u00e4llen','Symmetrilinjen \u00e4r y = 2'],a:0},
+  {c:'Avl\u00e4sa grafer',q:'En r\u00e4t linje g\u00e5r genom (0,3) och (2,7). Vad \u00e4r lutningen?',o:['2','4','3','1'],a:0},
+  {c:'Avl\u00e4sa grafer',q:'Grafen av y = x\u00b2 - 4 sk\u00e4r x-axeln i:',o:['x = -2 och x = 2','x = 0 och x = 4','x = -4 och x = 4','x = -1 och x = 4'],a:0},
+  {c:'Avl\u00e4sa grafer',q:'Vilken funktion \u00e4r en andragradsfunktion?',o:['y = 3x\u00b2 - x + 1','y = 3x - 1','y = 3\u02e3','y = 3/x'],a:0},
+  {c:'Avl\u00e4sa grafer',q:'Om f(x) = x\u00b2 - 2x, vad \u00e4r f(3)?',o:['3','6','9','1'],a:0},
+  {c:'Ekvationssystem',q:'L\u00f6s: x + y = 10, x - y = 4',o:['x = 7, y = 3','x = 6, y = 4','x = 8, y = 2','x = 5, y = 5'],a:0},
+  {c:'Ekvationssystem',q:'L\u00f6s: 2x + y = 7, x - y = 2',o:['x = 3, y = 1','x = 2, y = 3','x = 4, y = -1','x = 1, y = 5'],a:0},
+  {c:'Ekvationssystem',q:'Vilken metod l\u00f6ser b\u00e4st: y = 2x+1, y = -x+7?',o:['Substitution (b\u00e5da l\u00f6sta f\u00f6r y)','Grafisk l\u00f6sning','Addition','G\u00e5r ej att l\u00f6sa'],a:0},
+  {c:'Statistik',q:'Medelv\u00e4rde av 4, 8, 6, 10, 2?',o:['6','8','5','7'],a:0},
+  {c:'Statistik',q:'Median av 3, 7, 1, 9, 5, 2, 8?',o:['5','4','6','7'],a:0},
+  {c:'Statistik',q:'Vilket l\u00e4gesm\u00e5tt p\u00e5verkas mest av extremv\u00e4rden?',o:['Medelv\u00e4rde','Median','Typv\u00e4rde','Inget av dem'],a:0},
+  {c:'Statistik',q:'Variationsbredd f\u00f6r 2, 5, 8, 11, 14?',o:['12','9','14','6'],a:0},
+  {c:'Linj\u00e4ra funktioner',q:'Vad \u00e4r lutningen f\u00f6r linjen y = 3x - 7?',o:['3','-7','7','-3'],a:0},
+  {c:'Linj\u00e4ra funktioner',q:'Var sk\u00e4r y = -2x + 5 y-axeln?',o:['(0, 5)','(0, -2)','(5, 0)','(0, -5)'],a:0},
+  {c:'Linj\u00e4ra funktioner',q:'Tv\u00e5 linjer har k = 3 resp. k = -1/3. Vad g\u00e4ller?',o:['De \u00e4r vinkelr\u00e4ta','De \u00e4r parallella','De sammanfaller','Kan inte avg\u00f6ras'],a:0},
+  {c:'Linj\u00e4ra funktioner',q:'Best\u00e4m k f\u00f6r linjen genom (1, 2) och (3, 8).',o:['k = 3','k = 2','k = 5','k = 4'],a:0},
+  {c:'F\u00f6r\u00e4ndringsfaktor',q:'Ett pris \u00f6kar med 20%. Vad \u00e4r f\u00f6r\u00e4ndringsfaktorn?',o:['1.2','0.2','1.02','0.8'],a:0},
+  {c:'F\u00f6r\u00e4ndringsfaktor',q:'En vara kostar 500 kr och minskar 15%. Nytt pris?',o:['425 kr','485 kr','375 kr','450 kr'],a:0},
+  {c:'F\u00f6r\u00e4ndringsfaktor',q:'Priset g\u00e5r fr\u00e5n 200 till 250 kr. Hur stor \u00e4r \u00f6kningen i %?',o:['25%','50%','20%','12.5%'],a:0},
+  {c:'F\u00f6r\u00e4ndringsfaktor',q:'F\u00f6r\u00e4ndringsfaktor 0.85 motsvarar:',o:['Minskning med 15%','\u00d6kning med 85%','Minskning med 85%','\u00d6kning med 15%'],a:0},
+  {c:'Funktioner',q:'Om f(x) = 2x\u00b2 - 3, vad \u00e4r f(-2)?',o:['5','1','-11','11'],a:0},
+  {c:'Funktioner',q:'Vad \u00e4r definitionsm\u00e4ngden f\u00f6r f(x) = 1/x?',o:['Alla reella tal utom 0','Alla reella tal','Alla positiva tal','x > 0'],a:0},
+  {c:'Funktioner',q:'En andragradsfunktion \u00f6ppnar ned\u00e5t. Vad g\u00e4ller f\u00f6r a?',o:['a < 0','a > 0','a = 0','a = 1'],a:0},
+  {c:'Potenser',q:'F\u00f6renkla: 2\u00b3 \u00b7 2\u2074',o:['2\u2077 = 128','2\u00b9\u00b2 = 4096','6\u2077','8\u2074'],a:0},
+  {c:'Potenser',q:'Vad \u00e4r 5\u2070?',o:['1','0','5','Odefinierat'],a:0},
+  {c:'Potenser',q:'F\u00f6renkla: (3\u00b2)\u00b3',o:['3\u2076 = 729','3\u2075 = 243','9\u00b3 = 729','6\u00b3 = 216'],a:0},
+],
+C: [
+  {c:'Kvadratkomplettering',q:'Skriv x\u00b2 + 6x + 5 p\u00e5 formen (x+a)\u00b2 + b',o:['(x+3)\u00b2 - 4','(x+3)\u00b2 + 4','(x+6)\u00b2 - 31','(x+5)\u00b2 - 20'],a:0},
+  {c:'Kvadratkomplettering',q:'Skriv x\u00b2 - 4x + 7 p\u00e5 formen (x+a)\u00b2 + b',o:['(x-2)\u00b2 + 3','(x-4)\u00b2 + 7','(x-2)\u00b2 - 3','(x+2)\u00b2 + 3'],a:0},
+  {c:'Kvadratkomplettering',q:'Minsta v\u00e4rde f\u00f6r y = x\u00b2 - 8x + 20?',o:['4','12','20','-4'],a:0},
+  {c:'Andragradsekvation',q:'L\u00f6s: x\u00b2 - 7x + 12 = 0',o:['x = 3 och x = 4','x = 2 och x = 6','x = -3 och x = -4','x = 1 och x = 12'],a:0},
+  {c:'Andragradsekvation',q:'L\u00f6s: 2x\u00b2 - 8x = 0',o:['x = 0 och x = 4','x = 0 och x = -4','x = 2 och x = 4','x = -2 och x = 4'],a:0},
+  {c:'Andragradsekvation',q:'Diskriminanten f\u00f6r x\u00b2 + 3x + 5 = 0 \u00e4r:',o:['-11','29','11','-29'],a:0},
+  {c:'Exponentialekvation',q:'L\u00f6s: 4\u02e3 = 64',o:['x = 3','x = 4','x = 2','x = 16'],a:0},
+  {c:'Exponentialekvation',q:'F\u00f6renkla: 2\u00b3 \u00b7 2\u2074',o:['2\u2077 = 128','2\u00b9\u00b2 = 4096','6\u2077','8\u2074'],a:0},
+  {c:'Exponentialekvation',q:'L\u00f6s: 10\u02e3 = 0.001',o:['x = -3','x = 3','x = -0.001','x = 1000'],a:0},
+  {c:'Regression',q:'Korrelationskoefficienten r = 0.95 betyder:',o:['Starkt positivt linj\u00e4rt samband','Svagt positivt samband','Starkt negativt samband','Inget samband'],a:0},
+  {c:'Regression',q:'Vilket r-v\u00e4rde visar st\u00e4rkast samband?',o:['r = -0.98','r = 0.45','r = -0.32','r = 0.12'],a:0},
+  {c:'Regression',q:'En regressionsmodell ger y = 2.3x + 4.1. Vad \u00e4r y n\u00e4r x = 10?',o:['27.1','23.4','24.1','6.4'],a:0},
+  {c:'Regression',q:'N\u00e4r anv\u00e4nds exponentiell regression ist\u00e4llet f\u00f6r linj\u00e4r?',o:['N\u00e4r data visar allt snabbare \u00f6kning','N\u00e4r data ligger p\u00e5 en r\u00e4t linje','N\u00e4r r \u00e4r n\u00e4ra 0','N\u00e4r alla datapunkter \u00e4r negativa'],a:0},
+  {c:'Normalf\u00f6rdelning',q:'I en normalf\u00f6rdelning med \u00b5=100, \u03c3=15: ca hur m\u00e5nga % ligger mellan 85 och 115?',o:['68%','95%','99.7%','50%'],a:0},
+  {c:'Normalf\u00f6rdelning',q:'95% av v\u00e4rdena ligger inom:',o:['\u00b12 standardavvikelser','\u00b11 standardavvikelse','\u00b13 standardavvikelser','\u00b10.5 standardavvikelser'],a:0},
+  {c:'Normalf\u00f6rdelning',q:'Standardavvikelsen m\u00e4ter:',o:['Spridningen kring medelv\u00e4rdet','Det vanligaste v\u00e4rdet','Medianen','Antalet observationer'],a:0},
+  {c:'Normalf\u00f6rdelning',q:'\u00b5=50, \u03c3=5. Hur stor andel ligger \u00f6ver 60?',o:['Ca 2.5%','Ca 16%','Ca 50%','Ca 5%'],a:0},
+  {c:'Normalf\u00f6rdelning',q:'\u00b5=170, \u03c3=8. Vad \u00e4r P(154 < X < 186)?',o:['Ca 95%','Ca 68%','Ca 99.7%','Ca 50%'],a:0},
+  {c:'Logaritmer',q:'L\u00f6s: log\u2082(x) = 5',o:['x = 32','x = 25','x = 10','x = 64'],a:0},
+  {c:'Logaritmer',q:'F\u00f6renkla: lg(100) + lg(10)',o:['3','1010','lg(1000)','Alla \u00e4r r\u00e4tt'],a:3},
+  {c:'Logaritmer',q:'Skriv om: log(a) + log(b)',o:['log(a\u00b7b)','log(a+b)','log(a)\u00b7log(b)','log(a/b)'],a:0},
+  {c:'Logaritmer',q:'log\u2083(81) = ?',o:['4','3','27','9'],a:0},
+  {c:'Faktorisering',q:'Faktorisera: x\u00b2 + 5x + 6',o:['(x+2)(x+3)','(x+1)(x+6)','(x-2)(x-3)','(x+5)(x+1)'],a:0},
+  {c:'Faktorisering',q:'Faktorisera: x\u00b2 - 9',o:['(x-3)(x+3)','(x-9)(x+1)','(x-3)\u00b2','(x+9)(x-1)'],a:0},
+  {c:'Faktorisering',q:'Faktorisera: 2x\u00b2 - 8',o:['2(x-2)(x+2)','(2x-4)(x+2)','2(x-4)(x+2)','(x-2)(2x+4)'],a:0},
+  {c:'Potensregler',q:'F\u00f6renkla: x\u2075 / x\u00b2',o:['x\u00b3','x\u2077','x\u00b2\u00b7\u2075','x\u00b9\u2070'],a:0},
+  {c:'Potensregler',q:'F\u00f6renkla: (2x\u00b3)\u00b2',o:['4x\u2076','2x\u2076','4x\u2075','2x\u2079'],a:0},
+  {c:'Potensregler',q:'Vad \u00e4r x\u207b\u00b2 skrivet utan negativ exponent?',o:['1/x\u00b2','-x\u00b2','x\u00b2','-1/x\u00b2'],a:0},
+  {c:'Regression',q:'Residualen f\u00f6r en datapunkt \u00e4r:',o:['Verkligt v\u00e4rde minus skattat v\u00e4rde','Skattat v\u00e4rde minus medelv\u00e4rde','Medelv\u00e4rde minus verkligt v\u00e4rde','Alltid positiv'],a:0},
+  {c:'Normalf\u00f6rdelning',q:'Tv\u00e5 normalf\u00f6rdelningar har samma \u00b5 men olika \u03c3. Vilken \u00e4r bredare?',o:['Den med st\u00f6rre \u03c3','Den med mindre \u03c3','B\u00e5da lika','Beror p\u00e5 \u00b5'],a:0},
+  {c:'Andragradsekvation',q:'Summan av r\u00f6tterna till x\u00b2 - 7x + 10 = 0 \u00e4r:',o:['7','10','-7','3'],a:0},
+  {c:'Andragradsekvation',q:'Produkten av r\u00f6tterna till x\u00b2 + 3x - 18 = 0 \u00e4r:',o:['-18','3','-3','18'],a:0},
+]};
+
+const GENS = {
+  E: [genSymmetrilinje, genNollprodukt, genEkvationssystemE, genStatistikE, genLinjar, genForandringsfaktor, genAndragradVertex],
+  C: [genKvadratkomplettering, genAndragrad, genExponential, genDiskriminant, genFaktorisering, genLogaritmEnkel, genPotensregler],
+};
+
+let staticPool=[], staticIdx=0;
+function initQuestionPool() { staticPool=shuffle(STATIC[currentLevel]); staticIdx=0; }
+function nextQuestion() {
+  const gens=GENS[currentLevel];
+  if(Math.random()<0.5||gens.length===0){if(staticIdx>=staticPool.length){staticPool=shuffle(STATIC[currentLevel]);staticIdx=0;}return staticPool[staticIdx++];}
+  return gens[Math.floor(Math.random()*gens.length)]();
+}
+
+// ===================================================================
+//  GAME STATE
+// ===================================================================
+let ME={name:null,pts:0,streak:0,bestStreak:0,wins:0,consecutiveWins:0};
+let G={problem:null,locked:false,wrongOpts:new Set(),timerIv:null,roundCount:0,overlayTimeout:null,allScores:{},lastTickSec:-1};
+let allPlayerData={}, playerStates={};
+let heartbeatIv=null, cleanupIv=null;
+const slashEffects=[];
+
+function esc(s){const d=document.createElement('div');d.appendChild(document.createTextNode(s));return d.innerHTML;}
+function $(id){return document.getElementById(id);}
+
+// ===================================================================
+//  STAGE (Canvas)
+// ===================================================================
+let stageCanvas,stageCtx,animFrame=0;
+function initStage(){stageCanvas=$('stage');stageCtx=stageCanvas.getContext('2d');resizeStage();window.addEventListener('resize',resizeStage);requestAnimationFrame(animateStage);}
+function resizeStage(){const w=$('stage-wrap');stageCanvas.width=w.clientWidth;stageCanvas.height=parseInt(getComputedStyle(stageCanvas).height);}
+function animateStage(){
+  animFrame++;if(!stageCtx){requestAnimationFrame(animateStage);return;}
+  const w=stageCanvas.width,h=stageCanvas.height;stageCtx.clearRect(0,0,w,h);
+  const groundY=h-24;
+
+  // === ARENA BACKGROUND ===
+  // Spotlight from above
+  const spot=stageCtx.createRadialGradient(w/2,-10,10,w/2,h*0.5,w*0.55);
+  spot.addColorStop(0,'rgba(124,58,237,0.07)');spot.addColorStop(1,'transparent');
+  stageCtx.fillStyle=spot;stageCtx.fillRect(0,0,w,h);
+  // Atmosphere toward ground
+  const atm=stageCtx.createLinearGradient(0,0,0,h);
+  atm.addColorStop(0,'transparent');atm.addColorStop(0.75,'transparent');atm.addColorStop(1,'rgba(45,28,12,0.35)');
+  stageCtx.fillStyle=atm;stageCtx.fillRect(0,0,w,h);
+  // Ground line + fill
+  stageCtx.strokeStyle='rgba(130,95,55,0.5)';stageCtx.lineWidth=2;
+  stageCtx.beginPath();stageCtx.moveTo(0,groundY);stageCtx.lineTo(w,groundY);stageCtx.stroke();
+  const gf=stageCtx.createLinearGradient(0,groundY,0,h);
+  gf.addColorStop(0,'rgba(70,45,20,0.2)');gf.addColorStop(1,'rgba(30,18,8,0.08)');
+  stageCtx.fillStyle=gf;stageCtx.fillRect(0,groundY,w,h-groundY);
+  // Dust particles
+  if(animFrame%7===0){const dx=Math.random()*w;particles.push({x:dx,y:groundY-1,vx:(Math.random()-0.5)*1.5,vy:-Math.random()*1.5-0.5,life:0.5,decay:0.018+Math.random()*0.015,color:'rgba(160,140,110,0.35)',size:1+Math.random()*2});}
+
+  // === PLAYERS ===
+  const players=Object.entries(allPlayerData).sort(([,a],[,b])=>(b.pts||0)-(a.pts||0));
+  const maxShow=Math.min(players.length,Math.floor(w/80)||8);const shown=players.slice(0,maxShow);
+  const spacing=Math.min(90,w/(shown.length+1));
+  const inRound=G.problem&&!G.problem.winner;
+  const figY=groundY-76;
+  const alivePos=[];
+
+  shown.forEach(([name,data],i)=>{
+    const px=spacing*(i+1);const color=(data.character&&data.character.color)||'#7c3aed';const acc=(data.character&&data.character.style)||0;
+    let state=playerStates[name]||'idle';
+    if(data.dead&&G.problem&&data.dead===G.problem.id)state='dead';
+    else if(inRound&&state!=='dead'&&state!=='celebrate')state='fighting';
+    // Facing: alternate so fighters face each other
+    const faceRight=(i%2===0);
+    stageCtx.save();
+    if(!faceRight){stageCtx.translate(2*px,0);stageCtx.scale(-1,1);}
+    drawStickFigure(stageCtx,px,figY,color,acc,animFrame,state);
+    stageCtx.restore();
+    // Name (outside transform)
+    stageCtx.fillStyle=name===ME.name?'#a855f7':'#64748b';stageCtx.font='bold 10px sans-serif';stageCtx.textAlign='center';stageCtx.fillText(name.slice(0,10),px,h-6);
+    if(state==='celebrate'&&animFrame%8===0)spawnParticles(px,figY+20,color,4);
+    if(state==='dead'&&animFrame%22===0)spawnParticles(px,groundY-6,'#ef4444',1);
+    if(state!=='dead')alivePos.push(px);
+  });
+
+  // === CLASH EFFECTS ===
+  if(inRound&&alivePos.length>=2){
+    // Random clash between any two fighters
+    if(animFrame%14===0){
+      const a=Math.floor(Math.random()*alivePos.length);
+      let b=Math.floor(Math.random()*alivePos.length);if(b===a)b=(a+1)%alivePos.length;
+      const mx=(alivePos[a]+alivePos[b])/2,my=figY+22+Math.random()*22;
+      slashEffects.push({x:mx,y:my,angle:-0.8+Math.random()*1.6,life:1,size:11+Math.random()*10});
+      spawnParticles(mx,my,'#fbbf24',2);spawnParticles(mx,my,'#fff',1);
+    }
+    // Bigger clash between adjacent fighters
+    if(animFrame%24===0){
+      for(let i=0;i<alivePos.length-1;i++){
+        if(alivePos[i+1]-alivePos[i]<spacing*1.8){
+          const mx=(alivePos[i]+alivePos[i+1])/2,my=figY+28;
+          slashEffects.push({x:mx,y:my,angle:Math.random()*Math.PI-Math.PI/2,life:1,size:15+Math.random()*8});
+          spawnParticles(mx,my,'#ef4444',2);spawnParticles(mx,my,'#fbbf24',2);
+        }
+      }
+    }
+  }
+  // Draw slash effects
+  for(let i=slashEffects.length-1;i>=0;i--){
+    const s=slashEffects[i];s.life-=0.055;
+    if(s.life<=0){slashEffects.splice(i,1);continue;}
+    stageCtx.save();stageCtx.globalAlpha=s.life;stageCtx.translate(s.x,s.y);stageCtx.rotate(s.angle);
+    stageCtx.strokeStyle='#fbbf24';stageCtx.lineWidth=2.5;
+    stageCtx.beginPath();stageCtx.moveTo(-s.size,0);stageCtx.lineTo(s.size,0);stageCtx.stroke();
+    stageCtx.strokeStyle='rgba(255,255,255,0.6)';stageCtx.lineWidth=1.5;
+    stageCtx.beginPath();stageCtx.moveTo(-s.size*0.4,-s.size*0.5);stageCtx.lineTo(s.size*0.4,s.size*0.5);stageCtx.stroke();
+    stageCtx.restore();
+  }
+
+  if(players.length>maxShow){stageCtx.fillStyle='#64748b';stageCtx.font='11px sans-serif';stageCtx.textAlign='right';stageCtx.fillText('+'+(players.length-maxShow)+' till',w-10,h-8);}
+  updateParticles(stageCtx);requestAnimationFrame(animateStage);
+}
+
+// ===================================================================
+//  FIREBASE READY
+// ===================================================================
+function _onFirebaseReady(){
+  function updateTotalOnline(){
+    let count=0;
+    const promises=['battleE','battleC'].map(p=>db.ref(p+'/presence').once('value').then(s=>count+=(s.exists()?Object.keys(s.val()).length:0)));
+    Promise.all(promises).then(()=>{ $('total-online').textContent=count+' spelare online'; });
+  }
+  updateTotalOnline();
+  setInterval(updateTotalOnline,5000);
+}
+
+// ===================================================================
+//  LEVEL SELECT
+// ===================================================================
+function selectLevel(level){
+  currentLevel=level;
+  ROUND_TIME=LEVELS[level].time;
+  const lv=LEVELS[level];
+  $('join-level-badge').textContent=lv.name+' \u00b7 MATEMATIK 2b';
+  $('join-level-badge').style.background=lv.bg;
+  $('join-level-badge').style.color=lv.color;
+  $('level-screen').style.display='none';
+  $('join-screen').style.display='flex';
+  initQuestionPool();
+  // Load mini leaderboard for this level
+  ARENA=db.ref(LEVELS[level].path);
+  ARENA.child('leaderboard').orderByChild('pts').limitToLast(3).once('value',snap=>{
+    const lb=$('mini-lb');if(!snap.exists()){lb.innerHTML='';return;}
+    const entries=[];snap.forEach(c=>entries.push({name:c.key,...c.val()}));entries.sort((a,b)=>(b.pts||0)-(a.pts||0));
+    const medals=['\u{1f947}','\u{1f948}','\u{1f949}'];
+    lb.innerHTML='<div class="mini-lb-title">Top 3 \u2014 '+lv.name+'</div>'+entries.slice(0,3).map((e,i)=>'<div class="mini-lb-row">'+medals[i]+' <span class="mini-lb-name">'+esc(e.name)+'</span> <span class="mini-lb-pts">'+(e.pts||0)+'p</span></div>').join('');
+  });
+  ARENA.child('presence').on('value',snap=>{const c=snap.exists()?Object.keys(snap.val()).length:0;$('online-txt').textContent=c+' spelare online';});
+}
+
+function goBackToLevels(){
+  if(ARENA)ARENA.off();
+  $('join-screen').style.display='none';
+  $('level-screen').style.display='flex';
+}
+
+// ===================================================================
+//  JOIN / LEAVE
+// ===================================================================
+async function joinArena(){
+  const raw=$('name-input').value.trim();
+  if(!raw){$('join-err').textContent='Ange ett namn.';return;}
+  if(raw.length<2){$('join-err').textContent='Minst 2 tecken.';return;}
+  $('join-err').textContent='';ME.name=raw;ensureAudio();
+  const snap=await ARENA.child('scores/'+ME.name).once('value');
+  if(snap.exists()){const d=snap.val();ME.pts=(typeof d==='object'?d.pts:d)||0;ME.wins=(typeof d==='object'?d.wins:0)||0;ME.streak=0;ME.bestStreak=(typeof d==='object'?d.bestStreak:0)||0;}
+  await ARENA.child('scores/'+ME.name).set({pts:ME.pts,wins:ME.wins,streak:0,bestStreak:ME.bestStreak,character:{color:myColor,style:myAcc},lastSeen:firebase.database.ServerValue.TIMESTAMP});
+  ARENA.child('presence/'+ME.name).set(true);ARENA.child('presence/'+ME.name).onDisconnect().remove();
+  ARENA.child('scores/'+ME.name).onDisconnect().remove();
+  $('join-screen').style.display='none';$('arena-screen').style.display='block';
+  $('my-pts').textContent=ME.pts;
+  $('arena-logo').textContent='MATTE BATTLE \u00b7 '+LEVELS[currentLevel].name.toUpperCase();
+  initStage();startArena();
+  // Heartbeat: keep lastSeen fresh so other clients know we're alive
+  heartbeatIv=setInterval(()=>{
+    if(ME.name&&ARENA)ARENA.child('scores/'+ME.name+'/lastSeen').set(firebase.database.ServerValue.TIMESTAMP);
+  },8000);
+  // Cleanup: remove players whose lastSeen is >25s stale
+  cleanupIv=setInterval(()=>{
+    if(!ARENA)return;
+    ARENA.child('scores').once('value',snap=>{
+      if(!snap.exists())return;const now=Date.now();
+      snap.forEach(ch=>{const d=ch.val();
+        if(ch.key!==ME.name&&d&&typeof d==='object'&&d.lastSeen&&(now-d.lastSeen)>25000){
+          ARENA.child('scores/'+ch.key).remove();ARENA.child('presence/'+ch.key).remove();
+        }
+      });
+    });
+  },12000);
+}
+
+function leaveArena(){
+  clearInterval(G.timerIv);clearInterval(heartbeatIv);clearInterval(cleanupIv);heartbeatIv=null;cleanupIv=null;
+  ARENA.off();ARENA.child('presence/'+ME.name).remove();ARENA.child('scores/'+ME.name).remove();
+  $('arena-screen').style.display='none';$('level-screen').style.display='flex';
+  ME={name:null,pts:0,streak:0,bestStreak:0,wins:0,consecutiveWins:0};
+  G={problem:null,locked:false,wrongOpts:new Set(),timerIv:null,roundCount:0,overlayTimeout:null,allScores:{},lastTickSec:-1};
+  allPlayerData={};playerStates={};currentLevel=null;
+}
+
+// ===================================================================
+//  ARENA MAIN
+// ===================================================================
+function startArena(){
+  ARENA.child('problem').once('value',snap=>{
+    const p=snap.val();
+    if(!p||!p.question||p.winner)pushNewProblem(null);
+  });
+  ARENA.child('problem').on('value',snap=>{const p=snap.val();if(p&&p.question)displayProblem(p);});
+  ARENA.child('scores').on('value',snap=>{const scores=snap.val()||{};allPlayerData=scores;updateLeaderboard(scores);$('arena-online').textContent=Object.keys(scores).length+' spelare';});
+  ARENA.child('activity').limitToLast(15).on('value',snap=>{const items=[];snap.forEach(c=>items.unshift(c.val()));renderFeed(items);});
+}
+
+async function pushNewProblem(prevId){
+  const q=nextQuestion();
+  const np={id:'q_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),category:q.c,question:q.q,options:q.o,correct:q.a,startTs:firebase.database.ServerValue.TIMESTAMP,winner:null,winnerPts:null,round:firebase.database.ServerValue.TIMESTAMP};
+  await ARENA.child('problem').transaction(cur=>{if(prevId!==null&&cur&&cur.id!==prevId)return;return np;});
+}
+
+function displayProblem(p){
+  if(G.problem&&G.problem.id===p.id){if(p.winner&&!G.problem.winner){G.problem=p;handleWin(p);}return;}
+  clearInterval(G.timerIv);G.problem=p;G.locked=false;G.wrongOpts=new Set();G.roundCount++;G.lastTickSec=-1;
+  Object.keys(playerStates).forEach(n=>playerStates[n]='fighting');
+  ARENA.child('scores/'+ME.name+'/dead').remove();
+  $('q-cat').textContent=p.category;$('round-num').textContent='Runda '+G.roundCount;$('q-text').textContent=p.question;
+  const letters=['A','B','C','D'];
+  $('opts-grid').innerHTML=p.options.map((opt,i)=>'<button class="opt" id="opt-'+i+'" onclick="submitAnswer('+i+')"><div class="opt-letter">'+letters[i]+'</div><div>'+esc(opt)+'</div></button>').join('');
+  setStatus('Svara snabbast!','');
+  if(p.winner){handleWin(p);return;}
+  playSound('whoosh');startTimer(p.startTs||Date.now());
+}
+
+function startTimer(startTs){
+  clearInterval(G.timerIv);const bar=$('timer-bar'),secs=$('timer-secs'),myJitter=Math.random()*3000;
+  G.timerIv=setInterval(()=>{
+    const elapsed=(Date.now()-startTs)/1000,remaining=Math.max(0,ROUND_TIME-elapsed),pct=(remaining/ROUND_TIME)*100;
+    bar.style.width=pct+'%';bar.style.background=remaining>10?'var(--ok)':remaining>5?'var(--win)':'var(--hot)';secs.textContent=Math.ceil(remaining)+'s';
+    const sec=Math.ceil(remaining);if(sec<=5&&sec>0&&sec!==G.lastTickSec){G.lastTickSec=sec;playSound(sec<=3?'countdown':'tick');}
+    if(remaining<=0){clearInterval(G.timerIv);setTimeout(()=>{if(G.problem&&!G.problem.winner){ARENA.child('problem/winner').transaction(w=>{if(w!==null)return;return'__timeout__';},(err,committed)=>{if(committed){ARENA.child('activity').push({type:'timeout',name:'\u23f1',question:G.problem.question,ts:firebase.database.ServerValue.TIMESTAMP});setTimeout(()=>pushNewProblem(G.problem.id),1800);}});}},myJitter);disableAllOpts();setStatus('Ingen svarade \u2014 ny fr\u00e5ga kommer...','');}
+  },200);
+}
+
+async function submitAnswer(idx){
+  if(G.locked||G.wrongOpts.has(idx))return;if(!G.problem||G.problem.winner)return;
+  if(idx!==G.problem.correct){
+    G.locked=true;G.wrongOpts.add(idx);const btn=$('opt-'+idx);btn.classList.add('wrong');disableAllOpts();
+    playSound('death');playerStates[ME.name]='dead';
+    screenFlash('red');comboPopup('DEAD!','#ef4444');
+    $('arena-screen').classList.add('screen-shake');setTimeout(()=>$('arena-screen').classList.remove('screen-shake'),400);
+    ARENA.child('scores/'+ME.name+'/dead').set(G.problem.id);
+    if(ME.streak>0){ME.streak=0;ME.consecutiveWins=0;updateStreakBadge();await ARENA.child('scores/'+ME.name+'/streak').set(0);}
+    setStatus('Du dog! V\u00e4ntar p\u00e5 n\u00e4sta runda...','');return;
+  }
+  G.locked=true;clearInterval(G.timerIv);const claimedId=G.problem.id;const elapsed=(Date.now()-(G.problem.startTs||Date.now()))/1000;
+  ARENA.child('problem/winner').transaction(c=>{if(c!==null)return;return ME.name;},async(error,committed)=>{
+    if(!committed){G.locked=false;return;}
+    const basePoints=Math.round(500+500*Math.max(0,1-elapsed/ROUND_TIME));ME.streak++;ME.consecutiveWins++;if(ME.streak>ME.bestStreak)ME.bestStreak=ME.streak;
+    const streakMult=1+Math.min(ME.streak,5)*0.2;const roundPts=Math.round(basePoints*streakMult)+200;ME.pts+=roundPts;ME.wins++;
+    $('my-pts').textContent=ME.pts;updateStreakBadge();
+    await ARENA.child('scores/'+ME.name).update({pts:ME.pts,wins:ME.wins,streak:ME.streak,bestStreak:ME.bestStreak,lastSeen:firebase.database.ServerValue.TIMESTAMP});
+    await ARENA.child('problem/winnerPts').set(roundPts);
+    await ARENA.child('activity').push({type:'win',name:ME.name,question:G.problem.question,pts:roundPts,streak:ME.streak,ts:firebase.database.ServerValue.TIMESTAMP});
+    if(ME.streak>=3)await ARENA.child('activity').push({type:'streak',name:ME.name,streak:ME.streak,ts:firebase.database.ServerValue.TIMESTAMP});
+    if(ME.consecutiveWins>=3&&ME.consecutiveWins%3===0){playSound('knockout');await ARENA.child('activity').push({type:'knockout',name:ME.name,ts:firebase.database.ServerValue.TIMESTAMP});}
+    ARENA.child('leaderboard/'+ME.name).transaction(cur=>{const c2=cur||{};return{pts:Math.max(c2.pts||0,ME.pts),wins:Math.max(c2.wins||0,ME.wins),bestStreak:Math.max(c2.bestStreak||0,ME.bestStreak),character:{color:myColor,style:myAcc}};});
+    $('opt-'+idx).classList.add('correct');disableAllOpts();playSound('correct');screenFlash('green');
+    setTimeout(()=>playSound('kill'),150);
+    if(ME.streak>=2)comboPopup('STREAK x'+ME.streak+'!','#fbbf24');
+    if(ME.streak>=3)setTimeout(()=>playSound('streak'),250);
+    if(ME.consecutiveWins>=3&&ME.consecutiveWins%3===0)setTimeout(()=>comboPopup('KNOCKOUT!','#f97316'),400);
+    setTimeout(()=>pushNewProblem(claimedId),2800);
+  });
+}
+
+function handleWin(p){
+  disableAllOpts();clearInterval(G.timerIv);const winner=p.winner;const curId=p.id;
+  // Backup: if no new problem arrives within ~4s, this client pushes one
+  setTimeout(()=>{if(G.problem&&G.problem.id===curId&&G.problem.winner)pushNewProblem(curId);},3500+Math.random()*2000);
+  if(winner==='__timeout__'){setStatus('Timeout \u2014 ny fr\u00e5ga...','');ME.consecutiveWins=0;return;}
+  const isMe=winner===ME.name;
+  Object.keys(playerStates).forEach(n=>{playerStates[n]=n===winner?'celebrate':'dead';});
+  if(winner!==ME.name){playSound('death');screenFlash('red');}else{screenFlash('gold');}
+  const players=Object.entries(allPlayerData).sort(([,a],[,b])=>(b.pts||0)-(a.pts||0));
+  const maxShow=Math.min(players.length,Math.floor((stageCanvas?.width||800)/80)||8);
+  const winIdx=players.slice(0,maxShow).findIndex(([n])=>n===winner);
+  if(winIdx>=0&&stageCanvas){const spacing=Math.min(90,stageCanvas.width/(maxShow+1));spawnParticles(spacing*(winIdx+1),30,isMe?'#22c55e':'#fbbf24',25);}
+  const wc=$('win-char').getContext('2d');wc.clearRect(0,0,80,100);const wd=allPlayerData[winner];drawStickFigure(wc,40,10,(wd?.character?.color)||'#fbbf24',(wd?.character?.style)||0,0,'celebrate');
+  $('win-name').textContent=winner;$('win-sub').textContent=isMe?'Du vann rundan!':'vann rundan!';
+  const pts=p.winnerPts||0;$('win-pts').textContent=pts>0?('+'+pts+' po\u00e4ng'):'';
+  const ws=isMe?ME.streak:(allPlayerData[winner]?.streak||0);$('win-streak').textContent=ws>=2?('Streak x'+ws):'';
+  $('win-overlay').classList.add('show');
+  const fill=$('next-fill');fill.style.transition='none';fill.style.width='100%';requestAnimationFrame(()=>{fill.style.transition='width 2.5s linear';fill.style.width='0%';});
+  if(isMe)playSound('win');
+  setStatus(isMe?'Du vann!':(esc(winner)+' vann!'),isMe?'me-won':'winner');
+  if(G.overlayTimeout)clearTimeout(G.overlayTimeout);G.overlayTimeout=setTimeout(()=>{$('win-overlay').classList.remove('show');},2700);
+}
+
+function updateLeaderboard(scores){
+  const entries=Object.entries(scores).map(([name,data])=>({name,pts:typeof data==='object'?(data.pts||0):(data||0),streak:typeof data==='object'?(data.streak||0):0,wins:typeof data==='object'?(data.wins||0):0}));
+  entries.sort((a,b)=>b.pts-a.pts);const top=entries.slice(0,15);const medals=['\u{1f947}','\u{1f948}','\u{1f949}'];
+  $('lb-list').innerHTML=top.map((e,i)=>{const isMe=e.name===ME.name;const sc=e.streak>=3?' streak-fire':'';const sb=e.streak>=2?'<span class="lb-streak">\u{1f525}x'+e.streak+'</span>':'';return'<div class="lb-item'+(isMe?' me':'')+sc+'"><div class="lb-rank">'+(medals[i]||(i+1))+'</div><div class="lb-name">'+esc(e.name)+'</div><div class="lb-pts">'+e.pts+'</div>'+sb+'</div>';}).join('');
+}
+function updateStreakBadge(){const b=$('streak-badge');if(ME.streak>=2){b.classList.add('active');$('streak-num').textContent=ME.streak;}else b.classList.remove('active');}
+
+function renderFeed(items){
+  $('feed-list').innerHTML=items.slice(0,12).map(item=>{
+    if(item.type==='timeout')return'<div class="feed-item feed-time"><span class="feed-name">Ingen svarade</span><div style="font-size:.73rem;color:var(--muted);margin-top:2px">'+esc((item.question||'').slice(0,35))+'\u2026</div></div>';
+    if(item.type==='knockout')return'<div class="feed-item feed-knockout"><span class="feed-name">'+esc(item.name)+'</span> KNOCKOUT!</div>';
+    if(item.type==='streak')return'<div class="feed-item feed-streak"><span class="feed-name">'+esc(item.name)+'</span> streak x'+item.streak+' \u{1f525}</div>';
+    const ps=item.pts?' +'+item.pts+'p':'';return'<div class="feed-item feed-win"><span class="feed-name">'+esc(item.name)+'</span> vann'+ps+'<div style="font-size:.73rem;color:var(--muted);margin-top:2px">'+esc((item.question||'').slice(0,35))+'\u2026</div></div>';
+  }).join('');
+}
+
+function showLeaderboardModal(){
+  ARENA.child('leaderboard').orderByChild('pts').limitToLast(10).once('value',snap=>{
+    if(!snap.exists()){$('lb-modal-list').innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">Ingen data \u00e4nnu</div>';}
+    else{const entries=[];snap.forEach(c=>entries.push({name:c.key,...c.val()}));entries.sort((a,b)=>(b.pts||0)-(a.pts||0));const medals=['\u{1f947}','\u{1f948}','\u{1f949}'];
+    $('lb-modal-list').innerHTML=entries.map((e,i)=>{const isMe=e.name===ME.name;return'<div class="lb-item'+(isMe?' me':'')+'" style="margin-bottom:8px"><div class="lb-rank">'+(medals[i]||(i+1))+'</div><div class="lb-name">'+esc(e.name)+'</div><div style="font-size:.78rem;color:var(--muted);padding-right:8px">'+(e.wins||0)+'W \u{1f525}'+(e.bestStreak||0)+'</div><div class="lb-pts">'+(e.pts||0)+'</div></div>';}).join('');}
+    $('lb-modal').classList.add('show');
+  });
+}
+function closeLbModal(){$('lb-modal').classList.remove('show');}
+function disableAllOpts(){document.querySelectorAll('.opt').forEach(b=>b.disabled=true);}
+function setStatus(msg,cls){const el=$('status-bar');el.textContent=msg;el.className='status-bar'+(cls?' '+cls:'');}
+</script>
+</body>
+</html>
